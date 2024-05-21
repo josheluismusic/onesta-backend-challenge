@@ -4,14 +4,15 @@ import {
     CreateVarietyPort,
     GetFruitPort,
     GetVarietyPort,
-} from '../ports/out/fruit-variety.out';
+} from 'src/application/ports/out/fruit-variety.out';
+
+import { FruitModel, VarietyModel } from 'src/domain/models';
 import {
     CreateFruitUseCase,
     CreateVarietyUseCase,
     GetFruitUseCase,
     GetVarietyUseCase,
-} from '../ports/in/fruit-variety.use-case';
-import { FruitModel, VarietyModel } from 'src/domain/models';
+} from 'src/application/ports/in/fruit-variety.use-case';
 
 @Injectable()
 export class FruitVarietyService
@@ -33,18 +34,24 @@ export class FruitVarietyService
         @Inject('GetVarietyPort')
         private readonly getVarietyPort: GetVarietyPort,
     ) {}
+
     async getAllFruits(): Promise<FruitModel[]> {
         return this.getFruitPort.getAllFruits();
     }
+
     async getFruit(id: number): Promise<FruitModel> {
-        return this.getFruitPort.getFruit(id);
+        const fruit = await this.getFruitPort.getFruit(id);
+        if (!fruit) {
+            throw new Error(`Fruit with id ${id} not found`);
+        }
+        return fruit;
     }
+
     async createFruit(name: string): Promise<void> {
         try {
-            this.createFruitPort.createFruit(name);
+            await this.createFruitPort.createFruit(name);
         } catch (error) {
             this.logger.error(error.message);
-            // TODO: change for persistence exception
             throw new Error('Error creating fruit');
         }
     }
@@ -52,9 +59,15 @@ export class FruitVarietyService
     async getAllVarieties(): Promise<VarietyModel[]> {
         return this.getVarietyPort.getAllVarieties();
     }
+
     async getVariety(id: number): Promise<VarietyModel> {
-        return this.getVarietyPort.getVarietyById(id);
+        const variety = await this.getVarietyPort.getVarietyById(id);
+        if (!variety) {
+            throw new Error(`Variety with id ${id} not found`);
+        }
+        return variety;
     }
+
     async GetVarietiesByFruitId(fruitId: number): Promise<VarietyModel[]> {
         return this.getVarietyPort.getVarietiesByFruitId(fruitId);
     }
@@ -64,7 +77,6 @@ export class FruitVarietyService
             await this.createVarietyPort.createVariety(variety);
         } catch (error) {
             this.logger.error(error.message);
-            // TODO: change for persistence exception
             throw new Error('Error creating variety');
         }
     }

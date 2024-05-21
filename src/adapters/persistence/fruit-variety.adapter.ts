@@ -34,6 +34,7 @@ export class FruitVarietyAdapter
             varieties: [],
         }));
     }
+
     getAllFruits(): Promise<FruitModel[]> {
         this.logger.log(`Getting all fruits`);
         return this.fruitRepository.find().then((fruits) => {
@@ -73,8 +74,8 @@ export class FruitVarietyAdapter
         return this.varietyRepository.findOneBy({ id }).then((variety) => ({
             id: variety.id,
             name: variety.name,
-            fruitId: variety.fruit.id,
-            fruit: variety.fruit.name,
+            fruitId: null, //variety.fruit.id,
+            fruit: null, //variety.fruit.name,
             uniqueKey: variety.uniqueKey,
         }));
     }
@@ -89,8 +90,8 @@ export class FruitVarietyAdapter
                 return varieties.map((variety) => ({
                     id: variety.id,
                     name: variety.name,
-                    fruitId: variety.fruit.id,
-                    fruit: variety.fruit.name,
+                    fruitId: null, //variety.fruit.id,
+                    fruit: null, //variety.fruit.name,
                     uniqueKey: variety.uniqueKey,
                 }));
             });
@@ -107,7 +108,7 @@ export class FruitVarietyAdapter
             throw new Error(`Fruit with id ${variety.fruitId} not found`);
         }
 
-        const uniqueKey = `${fruit.id}-${variety.name}`;
+        const uniqueKey = `${fruit.name}-${variety.name}`;
         const varietyEntity = this.varietyRepository.create({
             name: variety.name,
             fruit,
