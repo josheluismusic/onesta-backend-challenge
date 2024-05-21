@@ -1,4 +1,5 @@
 import { FruitVarietyAdapter } from './fruit-variety.adapter';
+import { ClientAdapter } from './client.adapter';
 
 export const FruitVarietyAdapterProvider = [
     {
@@ -16,5 +17,16 @@ export const FruitVarietyAdapterProvider = [
     {
         provide: 'GetVarietyPort',
         useClass: FruitVarietyAdapter,
+    },
+];
+
+export const ClientAdapterProvider = [
+    {
+        provide: 'CreateClientPort',
+        useClass: ClientAdapter,
+    },
+    {
+        provide: 'GetClientPort',
+        useClass: ClientAdapter,
     },
 ];

@@ -1,24 +1,35 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { FruitVarietyAdapterProvider } from './adapters/persistence';
-import { FruitVarietyServiceProvider } from './application/services';
-import { FruitEntity, VarietyEntity } from './adapters/persistence/entities';
+import {
+    ClientAdapterProvider,
+    FruitVarietyAdapterProvider,
+} from './adapters/persistence';
+import {
+    ClientServiceProvider,
+    FruitVarietyServiceProvider,
+} from './application/services';
+import {
+    ClientEntity,
+    FruitEntity,
+    VarietyEntity,
+} from './adapters/persistence/entities';
 import { FruitVarietyController } from './adapters/api/fruit-variety.controller';
+import { ClientController } from './adapters/api/client.controller';
 
-const adapters = [...FruitVarietyAdapterProvider];
-const services = [...FruitVarietyServiceProvider];
-const controllers = [FruitVarietyController];
+const adapters = [...FruitVarietyAdapterProvider, ...ClientAdapterProvider];
+const services = [...FruitVarietyServiceProvider, ...ClientServiceProvider];
+const controllers = [FruitVarietyController, ClientController];
 
 @Module({
     imports: [
         TypeOrmModule.forRoot({
             type: 'sqlite',
             database: 'onesta.db',
-            entities: [FruitEntity, VarietyEntity],
+            entities: [FruitEntity, VarietyEntity, ClientEntity],
             synchronize: true,
         }),
-        TypeOrmModule.forFeature([FruitEntity, VarietyEntity]),
+        TypeOrmModule.forFeature([FruitEntity, VarietyEntity, ClientEntity]),
     ],
     controllers: [...controllers],
     providers: [...services, ...adapters],
