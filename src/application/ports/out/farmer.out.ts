@@ -2,6 +2,7 @@ import { FarmerModel } from '../../../domain/models/Farmer.model';
 
 export interface CreateFarmerPort {
     createFarmer(Farmer: FarmerModel): Promise<FarmerModel>;
+    getOrCreateFarmerByEmail(client: FarmerModel): Promise<FarmerModel>;
 }
 
 export interface GetFarmerPort {

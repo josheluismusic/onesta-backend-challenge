@@ -65,4 +65,8 @@ export const HarvestServiceProvider = [
         provide: 'GetHarvestUseCase',
         useClass: HarvestService,
     },
+    {
+        provide: 'UploadHarvestFileUseCase',
+        useClass: HarvestService,
+    },
 ];

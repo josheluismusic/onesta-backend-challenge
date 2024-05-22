@@ -26,6 +26,22 @@ export class FruitVarietyAdapter
         private readonly varietyRepository: Repository<VarietyEntity>,
     ) {}
 
+    async getOrCreateFruitByName(name: string): Promise<FruitModel> {
+        const fruit = await this.fruitRepository.findOne({
+            where: { name },
+            relations: ['varieties'],
+        });
+        if (fruit) {
+            return {
+                id: fruit.id,
+                name: fruit.name,
+                varieties: fruit.varieties.map((variety) => variety.name),
+            };
+        }
+
+        return this.createFruit(name);
+    }
+
     async getFruit(id: number): Promise<FruitModel> {
         this.logger.log(`Getting fruit with id ${id}`);
         return this.fruitRepository
@@ -126,18 +142,29 @@ export class FruitVarietyAdapter
             });
     }
 
-    async createVariety(variety: VarietyModel): Promise<VarietyModel> {
-        this.logger.log(`Creating variety ${variety.name}`);
-        const fruit = await this.fruitRepository.findOneBy({
-            id: variety.fruit.id,
+    async getOrCreateVariety(variety: VarietyModel): Promise<VarietyModel> {
+        const { uniqueKey, fruit } =
+            await this.getUniqueVarietyConstraint(variety);
+
+        const existingVariety = await this.varietyRepository.findOne({
+            where: { uniqueKey },
         });
 
-        if (!fruit) {
-            this.logger.error(`Fruit with id ${variety.fruit.id} not found`);
-            throw new Error(`Fruit with id ${variety.fruit.id} not found`);
+        if (existingVariety) {
+            return {
+                id: existingVariety.id,
+                name: existingVariety.name,
+                fruit: fruit,
+                uniqueKey,
+            };
         }
 
-        const uniqueKey = `${fruit.name}-${variety.name}`;
+        return await this.createVariety(variety);
+    }
+
+    async createVariety(variety: VarietyModel): Promise<VarietyModel> {
+        const { uniqueKey, fruit } =
+            await this.getUniqueVarietyConstraint(variety);
 
         const existingVariety = await this.varietyRepository.findOneBy({
             uniqueKey,
@@ -165,5 +192,20 @@ export class FruitVarietyAdapter
             },
             uniqueKey,
         };
+    }
+
+    private async getUniqueVarietyConstraint(variety: VarietyModel) {
+        this.logger.log(`Creating variety ${variety.name}`);
+        const fruit = await this.fruitRepository.findOneBy({
+            id: variety.fruit.id,
+        });
+
+        if (!fruit) {
+            this.logger.error(`Fruit with id ${variety.fruit.id} not found`);
+            throw new Error(`Fruit with id ${variety.fruit.id} not found`);
+        }
+
+        const uniqueKey = `${fruit.name}-${variety.name}`;
+        return { uniqueKey, fruit };
     }
 }

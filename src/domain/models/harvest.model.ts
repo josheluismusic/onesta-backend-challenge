@@ -19,3 +19,35 @@ export class HarvestModel {
     date?: Date;
     origin: HarvestOriginInfomation;
 }
+
+export class HarvestUploadModel {
+    // Mail Agricultor
+    farmerEmail: string;
+
+    // Nombre Agricultor
+    farmerFirstName: string;
+
+    // Apellido Agricultor
+    farmerLastName: string;
+
+    // Mail Cliente
+    clientEmail: string;
+
+    // Nombre Cliente
+    clientFirstName: string;
+
+    // Apellido Cliente
+    clientLastName: string;
+
+    // Nombre Campo
+    fieldName: string;
+
+    // Ubicación de Campo
+    fieldLocation: string;
+
+    // Fruta Cosechada
+    harvestedFruit: string;
+
+    // Variedad Cosechada
+    harvestedVariety: string;
+}

@@ -14,10 +14,26 @@ export class ClientAdapter implements CreateClientPort, GetClientPort {
         private readonly clientRepository: Repository<ClientEntity>,
     ) {}
 
+    async getOrCreateClientByEmail(client: ClientModel): Promise<ClientModel> {
+        const clientExists = await this.getClientByEmail(client.email);
+
+        if (clientExists) {
+            clientExists.firstName = client.firstName;
+            clientExists.lastName = client.lastName;
+            await this.clientRepository.update(clientExists.id, clientExists);
+            return {
+                id: clientExists.id,
+                email: clientExists.email,
+                firstName: clientExists.firstName,
+                lastName: clientExists.lastName,
+            };
+        }
+
+        return this.createClient(client);
+    }
+
     async createClient(client: ClientModel): Promise<ClientModel> {
-        const clientExists = await this.clientRepository.findOneBy({
-            email: client.email,
-        });
+        const clientExists = await this.getClientByEmail(client.email);
         if (clientExists) {
             throw new ConflictException(
                 'Client with this email already exists',
@@ -55,6 +71,12 @@ export class ClientAdapter implements CreateClientPort, GetClientPort {
                 lastName: client.lastName,
                 email: client.email,
             }));
+        });
+    }
+
+    async getClientByEmail(email: string) {
+        return await this.clientRepository.findOneBy({
+            email: email,
         });
     }
 }

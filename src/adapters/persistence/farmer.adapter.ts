@@ -11,11 +11,29 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 export class FarmerAdapter implements CreateFarmerPort, GetFarmerPort {
     constructor(
         @InjectRepository(FarmerEntity)
-        private readonly FarmerRepository: Repository<FarmerEntity>,
+        private readonly farmerRepository: Repository<FarmerEntity>,
     ) {}
 
+    async getOrCreateFarmerByEmail(client: FarmerModel): Promise<FarmerModel> {
+        const farmerExists = await this.getFarmerByEmail(client.email);
+
+        if (farmerExists) {
+            farmerExists.firstName = client.firstName;
+            farmerExists.lastName = client.lastName;
+            await this.farmerRepository.update(farmerExists.id, farmerExists);
+            return {
+                id: farmerExists.id,
+                email: farmerExists.email,
+                firstName: farmerExists.firstName,
+                lastName: farmerExists.lastName,
+            };
+        }
+
+        return this.createFarmer(client);
+    }
+
     async createFarmer(farmer: FarmerModel): Promise<FarmerModel> {
-        const farmerExists = await this.FarmerRepository.findOneBy({
+        const farmerExists = await this.farmerRepository.findOneBy({
             email: farmer.email,
         });
 
@@ -25,8 +43,8 @@ export class FarmerAdapter implements CreateFarmerPort, GetFarmerPort {
             );
         }
 
-        const newFarmer = this.FarmerRepository.create(farmer);
-        await this.FarmerRepository.save(newFarmer);
+        const newFarmer = this.farmerRepository.create(farmer);
+        await this.farmerRepository.save(newFarmer);
         return {
             id: newFarmer.id,
             firstName: newFarmer.firstName,
@@ -36,7 +54,7 @@ export class FarmerAdapter implements CreateFarmerPort, GetFarmerPort {
     }
 
     async getFarmer(id: number): Promise<FarmerModel> {
-        const farmer = await this.FarmerRepository.findOne({
+        const farmer = await this.farmerRepository.findOne({
             where: { id },
             relations: ['fields'],
         });
@@ -56,19 +74,27 @@ export class FarmerAdapter implements CreateFarmerPort, GetFarmerPort {
     }
 
     async getAllFarmers(): Promise<FarmerModel[]> {
-        return this.FarmerRepository.find({
-            relations: ['fields'],
-        }).then((farmer) => {
-            return farmer.map((farmer) => ({
-                id: farmer.id,
-                firstName: farmer.firstName,
-                lastName: farmer.lastName,
-                email: farmer.email,
-                fields: farmer.fields.map((field) => ({
-                    name: field.name,
-                    location: field.location,
-                })),
-            }));
+        return this.farmerRepository
+            .find({
+                relations: ['fields'],
+            })
+            .then((farmer) => {
+                return farmer.map((farmer) => ({
+                    id: farmer.id,
+                    firstName: farmer.firstName,
+                    lastName: farmer.lastName,
+                    email: farmer.email,
+                    fields: farmer.fields.map((field) => ({
+                        name: field.name,
+                        location: field.location,
+                    })),
+                }));
+            });
+    }
+
+    async getFarmerByEmail(email: string) {
+        return await this.farmerRepository.findOneBy({
+            email: email,
         });
     }
 }

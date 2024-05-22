@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+
 import {
     ClientAdapterProvider,
     FarmerAdapterProvider,
@@ -28,6 +31,7 @@ import { FieldEntity } from './adapters/persistence/entities/filed.entity';
 import { FieldController } from './adapters/api/field.controller';
 import { HarvestEntity } from './adapters/persistence/entities/harvest.entity';
 import { HarvestController } from './adapters/api/harvest.controller';
+import { MulterModule } from '@nestjs/platform-express';
 
 const adapters = [
     ...FruitVarietyAdapterProvider,
@@ -62,6 +66,17 @@ const ormEntities = [
 
 @Module({
     imports: [
+        MulterModule.register({
+            storage: diskStorage({
+                destination: './uploads',
+                filename: (req, file, callback) => {
+                    const uniqueSuffix =
+                        Date.now() + '-' + Math.round(Math.random() * 1e9);
+                    const ext = extname(file.originalname);
+                    callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+                },
+            }),
+        }),
         TypeOrmModule.forRoot({
             type: 'sqlite',
             database: 'onesta.db',

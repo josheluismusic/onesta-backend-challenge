@@ -5,6 +5,7 @@ import { FruitModel, VarietyModel } from 'src/domain/models';
  */
 export interface CreateFruitPort {
     createFruit(name: string): Promise<FruitModel>;
+    getOrCreateFruitByName(name: string): Promise<FruitModel>;
 }
 
 export interface GetFruitPort {
@@ -17,6 +18,7 @@ export interface GetFruitPort {
  */
 export interface CreateVarietyPort {
     createVariety(variety: VarietyModel): Promise<VarietyModel>;
+    getOrCreateVariety(variety: VarietyModel): Promise<VarietyModel>;
 }
 
 export interface GetVarietyPort {

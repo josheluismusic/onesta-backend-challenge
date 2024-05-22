@@ -2,6 +2,7 @@ import { FieldModel } from 'src/domain/models/field.mode';
 
 export interface CreateFieldPort {
     createField(field: FieldModel): Promise<FieldModel>;
+    getOrCreateFieldByNameAndLocation(field: FieldModel): Promise<FieldModel>;
 }
 
 export interface GetFieldPort {

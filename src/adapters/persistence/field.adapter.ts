@@ -18,6 +18,26 @@ export class FieldAdapter implements CreateFieldPort, GetFieldPort {
         private readonly farmerRepository: Repository<FarmerEntity>,
     ) {}
 
+    async getOrCreateFieldByNameAndLocation(
+        field: FieldModel,
+    ): Promise<FieldModel> {
+        const fieldExist = await this.fieldRepository.findOne({
+            where: { name: field.name, location: field.location },
+            relations: ['farmer'],
+        });
+
+        if (fieldExist) {
+            return {
+                id: fieldExist.id,
+                name: fieldExist.name,
+                location: fieldExist.location,
+                farmer: fieldExist.farmer,
+            };
+        }
+
+        return this.createField(field);
+    }
+
     async createField(field: FieldModel): Promise<FieldModel> {
         const fieldExist = await this.fieldRepository.findOneBy({
             name: field.name,

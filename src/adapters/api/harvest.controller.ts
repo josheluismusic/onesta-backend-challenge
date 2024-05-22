@@ -1,9 +1,20 @@
-import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Inject,
+    Param,
+    Post,
+    UploadedFile,
+    UseInterceptors,
+} from '@nestjs/common';
 import {
     CreateHarvestUseCase,
     GetHarvestUseCase,
+    UploadHarvestFileUseCase,
 } from 'src/application/ports/in/harvest.use-case';
 import { CreateHarvestRequestBodyDTO } from './dto/harvest.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('harvest')
 export class HarvestController {
@@ -12,6 +23,8 @@ export class HarvestController {
         private readonly createHarvestUseCase: CreateHarvestUseCase,
         @Inject('GetHarvestUseCase')
         private readonly getHarvestUseCase: GetHarvestUseCase,
+        @Inject('GetHarvestUseCase')
+        private readonly uploadHarvestFileUseCase: UploadHarvestFileUseCase,
     ) {}
 
     @Post()
@@ -34,5 +47,15 @@ export class HarvestController {
     @Get()
     async getAllHarvests() {
         return this.getHarvestUseCase.getAllHarvests();
+    }
+
+    @Post('upload')
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadHarvestFile(@UploadedFile() file: Express.Multer.File) {
+        await this.uploadHarvestFileUseCase.uploadHarvestFile(file.filename);
+        return {
+            message: 'file uploaded successfully',
+            fileName: file.originalname,
+        };
     }
 }
