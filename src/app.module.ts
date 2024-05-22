@@ -4,11 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import {
     ClientAdapterProvider,
     FarmerAdapterProvider,
+    FieldAdapterProvider,
     FruitVarietyAdapterProvider,
 } from './adapters/persistence';
 import {
     ClientServiceProvider,
     FarmerServiceProvider,
+    FieldServiceProvider,
     FruitVarietyServiceProvider,
 } from './application/services';
 import {
@@ -20,21 +22,34 @@ import {
 import { FruitVarietyController } from './adapters/api/fruit-variety.controller';
 import { ClientController } from './adapters/api/client.controller';
 import { FarmerController } from './adapters/api/farmer.controller';
+import { FieldEntity } from './adapters/persistence/entities/filed.entity';
+import { FieldController } from './adapters/api/field.controller';
 
 const adapters = [
     ...FruitVarietyAdapterProvider,
     ...ClientAdapterProvider,
     ...FarmerAdapterProvider,
+    ...FieldAdapterProvider,
 ];
 const services = [
     ...FruitVarietyServiceProvider,
     ...ClientServiceProvider,
     ...FarmerServiceProvider,
+    ...FieldServiceProvider,
 ];
 const controllers = [
     FruitVarietyController,
     ClientController,
     FarmerController,
+    FieldController,
+];
+
+const ormEntities = [
+    FruitEntity,
+    VarietyEntity,
+    ClientEntity,
+    FarmerEntity,
+    FieldEntity,
 ];
 
 @Module({
@@ -42,15 +57,10 @@ const controllers = [
         TypeOrmModule.forRoot({
             type: 'sqlite',
             database: 'onesta.db',
-            entities: [FruitEntity, VarietyEntity, ClientEntity, FarmerEntity],
+            entities: ormEntities,
             synchronize: true,
         }),
-        TypeOrmModule.forFeature([
-            FruitEntity,
-            VarietyEntity,
-            ClientEntity,
-            FarmerEntity,
-        ]),
+        TypeOrmModule.forFeature([...ormEntities]),
     ],
     controllers: [...controllers],
     providers: [...services, ...adapters],

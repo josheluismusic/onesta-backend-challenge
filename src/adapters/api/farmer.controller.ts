@@ -14,7 +14,7 @@ import {
 import {
     CreateFarmerUseCase,
     GetFarmerUseCase,
-} from 'src/application/ports/in/Farmer.user-case';
+} from 'src/application/ports/in/Farmer.use-case';
 import { CreateFarmerRequestBodyDTO } from './dto/Farmer.dto';
 
 @Controller('farmer')

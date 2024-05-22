@@ -36,25 +36,38 @@ export class FarmerAdapter implements CreateFarmerPort, GetFarmerPort {
     }
 
     async getFarmer(id: number): Promise<FarmerModel> {
-        const Farmer = await this.FarmerRepository.findOneBy({ id });
-        if (!Farmer) {
+        const farmer = await this.FarmerRepository.findOne({
+            where: { id },
+            relations: ['fields'],
+        });
+        if (!farmer) {
             throw new NotFoundException(`Farmer with id ${id} not found`);
         }
         return {
-            id: Farmer.id,
-            firstName: Farmer.firstName,
-            lastName: Farmer.lastName,
-            email: Farmer.email,
+            id: farmer.id,
+            firstName: farmer.firstName,
+            lastName: farmer.lastName,
+            email: farmer.email,
+            fields: farmer.fields.map((field) => ({
+                name: field.name,
+                location: field.location,
+            })),
         };
     }
 
     async getAllFarmers(): Promise<FarmerModel[]> {
-        return this.FarmerRepository.find().then((Farmers) => {
-            return Farmers.map((Farmer) => ({
-                id: Farmer.id,
-                firstName: Farmer.firstName,
-                lastName: Farmer.lastName,
-                email: Farmer.email,
+        return this.FarmerRepository.find({
+            relations: ['fields'],
+        }).then((farmer) => {
+            return farmer.map((farmer) => ({
+                id: farmer.id,
+                firstName: farmer.firstName,
+                lastName: farmer.lastName,
+                email: farmer.email,
+                fields: farmer.fields.map((field) => ({
+                    name: field.name,
+                    location: field.location,
+                })),
             }));
         });
     }

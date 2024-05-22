@@ -3,4 +3,5 @@ export class FarmerModel {
     firstName: string;
     lastName: string;
     email: string;
+    fields?: { name: string; location: string }[];
 }

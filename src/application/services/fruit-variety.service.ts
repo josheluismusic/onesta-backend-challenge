@@ -1,4 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+    Inject,
+    Injectable,
+    InternalServerErrorException,
+    Logger,
+} from '@nestjs/common';
 import {
     CreateFruitPort,
     CreateVarietyPort,
@@ -52,7 +57,7 @@ export class FruitVarietyService
             await this.createFruitPort.createFruit(name);
         } catch (error) {
             this.logger.error(error.message);
-            throw new Error('Error creating fruit');
+            throw new InternalServerErrorException(error.message);
         }
     }
 
@@ -77,7 +82,7 @@ export class FruitVarietyService
             await this.createVarietyPort.createVariety(variety);
         } catch (error) {
             this.logger.error(error.message);
-            throw new Error('Error creating variety');
+            throw new InternalServerErrorException(error.message);
         }
     }
 }

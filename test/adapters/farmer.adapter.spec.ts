@@ -89,26 +89,33 @@ describe('FarmerAdapter', () => {
                 firstName: 'John',
                 lastName: 'Doe',
                 email: 'john.doe@example.com',
+                fields: [],
             };
             const farmerEntity = new FarmerEntity();
             Object.assign(farmerEntity, farmer);
 
-            jest.spyOn(farmerRepository, 'findOneBy').mockResolvedValue(
+            jest.spyOn(farmerRepository, 'findOne').mockResolvedValue(
                 farmerEntity,
             );
 
             const result = await adapter.getFarmer(1);
             expect(result).toEqual(farmer);
-            expect(farmerRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
+            expect(farmerRepository.findOne).toHaveBeenCalledWith({
+                where: { id: 1 },
+                relations: ['fields'],
+            });
         });
 
         it('should throw a NotFoundException if farmer is not found', async () => {
-            jest.spyOn(farmerRepository, 'findOneBy').mockResolvedValue(null);
+            jest.spyOn(farmerRepository, 'findOne').mockResolvedValue(null);
 
             await expect(adapter.getFarmer(1)).rejects.toThrow(
                 NotFoundException,
             );
-            expect(farmerRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
+            expect(farmerRepository.findOne).toHaveBeenCalledWith({
+                where: { id: 1 },
+                relations: ['fields'],
+            });
         });
     });
 
@@ -120,11 +127,18 @@ describe('FarmerAdapter', () => {
                     firstName: 'John',
                     lastName: 'Doe',
                     email: 'john.doe@example.com',
+                    fields: [{ name: 'Field 1', location: 'Location 1' }],
                 },
             ];
             const farmerEntities = farmers.map((farmer) => {
                 const entity = new FarmerEntity();
-                Object.assign(entity, farmer);
+                entity.id = farmer.id;
+                entity.firstName = farmer.firstName;
+                entity.lastName = farmer.lastName;
+                entity.email = farmer.email;
+                entity.fields = [
+                    { name: 'Field 1', location: 'Location 1' },
+                ] as any;
                 return entity;
             });
 
@@ -134,7 +148,9 @@ describe('FarmerAdapter', () => {
 
             const result = await adapter.getAllFarmers();
             expect(result).toEqual(farmers);
-            expect(farmerRepository.find).toHaveBeenCalled();
+            expect(farmerRepository.find).toHaveBeenCalledWith({
+                relations: ['fields'],
+            });
         });
     });
 });

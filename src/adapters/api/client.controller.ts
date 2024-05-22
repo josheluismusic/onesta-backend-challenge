@@ -14,7 +14,7 @@ import {
 import {
     CreateClientUseCase,
     GetClientUseCase,
-} from 'src/application/ports/in/client.user-case';
+} from 'src/application/ports/in/client.use-case';
 import { CreateClientRequestBodyDTO } from './dto/client.dto';
 
 @Controller('client')

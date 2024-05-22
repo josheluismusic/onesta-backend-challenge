@@ -42,11 +42,13 @@ export class FruitVarietyController {
         @Body() createFruitRequestBodyDTO: CreateFruitRequestBodyDTO,
     ): Promise<void> {
         try {
-            this.createFruitUseCase.createFruit(createFruitRequestBodyDTO.name);
+            await this.createFruitUseCase.createFruit(
+                createFruitRequestBodyDTO.name,
+            );
         } catch (error) {
             this.logger.error(error.message);
             throw new InternalServerErrorException({
-                message: 'Error creating fruit',
+                message: error.message,
             });
         }
     }
@@ -83,14 +85,14 @@ export class FruitVarietyController {
         @Body() createVarietyRequestBodyDTO: CreateVarietyRequestBodyDTO,
     ): Promise<void> {
         try {
-            this.createVarietyUseCase.createVariety({
+            await this.createVarietyUseCase.createVariety({
                 name: createVarietyRequestBodyDTO.name,
-                fruitId: createVarietyRequestBodyDTO.fruitId,
+                fruit: { id: createVarietyRequestBodyDTO.fruitId },
             });
         } catch (error) {
             this.logger.error(error.message);
             throw new InternalServerErrorException({
-                message: 'Error creating fruit',
+                message: error.message,
             });
         }
     }

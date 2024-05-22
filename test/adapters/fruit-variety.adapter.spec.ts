@@ -44,6 +44,7 @@ describe('FruitVarietyAdapter', () => {
             const fruitEntity = new FruitEntity();
             fruitEntity.id = 1;
             fruitEntity.name = fruitName;
+            jest.spyOn(fruitRepository, 'findOneBy').mockReturnValue(null);
             jest.spyOn(fruitRepository, 'create').mockReturnValue(fruitEntity);
             jest.spyOn(fruitRepository, 'save').mockResolvedValue(fruitEntity);
 
@@ -57,12 +58,27 @@ describe('FruitVarietyAdapter', () => {
             const fruitEntity = new FruitEntity();
             fruitEntity.id = 1;
             fruitEntity.name = 'Apple';
-            jest.spyOn(fruitRepository, 'findOneBy').mockResolvedValue(
+            fruitEntity.varieties = [
+                {
+                    id: 1,
+                    name: 'large',
+                    fruit: null,
+                    uniqueKey: 'apple-large',
+                },
+            ];
+            jest.spyOn(fruitRepository, 'findOne').mockResolvedValue(
                 fruitEntity,
             );
 
+            const resultExpected = {
+                id: 1,
+                name: 'Apple',
+                varieties: ['large'],
+            };
+
             const result = await adapter.getFruit(1);
-            expect(result).toEqual({ id: 1, name: 'Apple', varieties: [] });
+
+            expect(result).toEqual(resultExpected);
         });
     });
 
@@ -71,12 +87,26 @@ describe('FruitVarietyAdapter', () => {
             const fruitEntity = new FruitEntity();
             fruitEntity.id = 1;
             fruitEntity.name = 'Apple';
+            fruitEntity.varieties = [
+                {
+                    id: 1,
+                    name: 'large',
+                    fruit: null,
+                    uniqueKey: 'apple-large',
+                },
+            ];
             jest.spyOn(fruitRepository, 'find').mockResolvedValue([
                 fruitEntity,
             ]);
 
+            const resultExpected = {
+                id: 1,
+                name: 'Apple',
+                varieties: ['large'],
+            };
+
             const result = await adapter.getAllFruits();
-            expect(result).toEqual([{ id: 1, name: 'Apple', varieties: [] }]);
+            expect(result).toEqual([resultExpected]);
         });
     });
 
@@ -86,6 +116,11 @@ describe('FruitVarietyAdapter', () => {
             varietyEntity.id = 1;
             varietyEntity.name = 'brocoli';
             varietyEntity.uniqueKey = 'brocoli-large';
+            varietyEntity.fruit = {
+                id: 1,
+                name: 'fruit_test',
+                varieties: null,
+            };
             jest.spyOn(varietyRepository, 'find').mockResolvedValue([
                 varietyEntity,
             ]);
@@ -95,8 +130,10 @@ describe('FruitVarietyAdapter', () => {
                 {
                     id: 1,
                     name: 'brocoli',
-                    fruitId: null,
-                    fruit: null,
+                    fruit: {
+                        id: 1,
+                        name: 'fruit_test',
+                    },
                     uniqueKey: 'brocoli-large',
                 },
             ]);
@@ -109,7 +146,12 @@ describe('FruitVarietyAdapter', () => {
             varietyEntity.id = 1;
             varietyEntity.name = 'brocoli';
             varietyEntity.uniqueKey = 'brocoli-large';
-            jest.spyOn(varietyRepository, 'findOneBy').mockResolvedValue(
+            varietyEntity.fruit = {
+                id: 1,
+                name: 'fruit_test',
+                varieties: null,
+            };
+            jest.spyOn(varietyRepository, 'findOne').mockResolvedValue(
                 varietyEntity,
             );
 
@@ -117,8 +159,10 @@ describe('FruitVarietyAdapter', () => {
             expect(result).toEqual({
                 id: 1,
                 name: 'brocoli',
-                fruitId: null,
-                fruit: null,
+                fruit: {
+                    id: 1,
+                    name: 'fruit_test',
+                },
                 uniqueKey: 'brocoli-large',
             });
         });
@@ -163,6 +207,8 @@ describe('FruitVarietyAdapter', () => {
                 fruitEntity,
             );
 
+            jest.spyOn(varietyRepository, 'findOneBy').mockReturnValue(null);
+
             jest.spyOn(varietyRepository, 'create').mockReturnValue(
                 varietyEntity,
             );
@@ -171,14 +217,16 @@ describe('FruitVarietyAdapter', () => {
             );
 
             const result = await adapter.createVariety({
-                fruitId: 1,
+                fruit: { id: 1 },
                 name: varietyName,
             });
             expect(result).toEqual({
                 id: 1,
                 name: varietyName,
-                fruitId: fruitEntity.id,
-                fruit: fruitEntity.name,
+                fruit: {
+                    id: 1,
+                    name: 'brocoli',
+                },
                 uniqueKey: 'brocoli-large',
             });
         });
@@ -188,7 +236,7 @@ describe('FruitVarietyAdapter', () => {
 
             await expect(
                 adapter.createVariety({
-                    fruitId: 1,
+                    fruit: { id: 1 },
                     name: 'large',
                     uniqueKey: 'brocoli-large',
                 }),

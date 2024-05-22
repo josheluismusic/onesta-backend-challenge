@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FruitEntity, VarietyEntity } from './entities';
@@ -28,26 +28,42 @@ export class FruitVarietyAdapter
 
     async getFruit(id: number): Promise<FruitModel> {
         this.logger.log(`Getting fruit with id ${id}`);
-        return this.fruitRepository.findOneBy({ id }).then((fruit) => ({
-            id: fruit.id,
-            name: fruit.name,
-            varieties: [],
-        }));
+        return this.fruitRepository
+            .findOne({ where: { id }, relations: ['varieties'] })
+            .then((fruit) => ({
+                id: fruit.id,
+                name: fruit.name,
+                varieties: fruit.varieties.map((variety) => variety.name),
+            }));
     }
 
     getAllFruits(): Promise<FruitModel[]> {
         this.logger.log(`Getting all fruits`);
-        return this.fruitRepository.find().then((fruits) => {
-            return fruits.map((fruit) => ({
-                id: fruit.id,
-                name: fruit.name,
-                varieties: [],
-            }));
-        });
+        return this.fruitRepository
+            .find({
+                relations: ['varieties'],
+            })
+            .then((fruits) => {
+                return fruits.map((fruit) => ({
+                    id: fruit.id,
+                    name: fruit.name,
+                    varieties: fruit.varieties.map((variety) => variety.name),
+                }));
+            });
     }
 
     async createFruit(name: string): Promise<FruitModel> {
         this.logger.log(`Creating fruit ${name}`);
+
+        const existingFruit = await this.fruitRepository.findOneBy({ name });
+
+        if (existingFruit) {
+            this.logger.error(`Fruit with name ${name} already exists`);
+            throw new ConflictException(
+                `Fruit with name ${name} already exists`,
+            );
+        }
+
         const fruit = this.fruitRepository.create({ name });
         const savedFruit = await this.fruitRepository.save(fruit);
         return {
@@ -57,30 +73,43 @@ export class FruitVarietyAdapter
         };
     }
 
-    getAllVarieties(): Promise<VarietyModel[]> {
+    async getAllVarieties(): Promise<VarietyModel[]> {
         this.logger.log(`Getting all varieties`);
-        return this.varietyRepository.find().then((varieties) => {
-            return varieties.map((variety) => ({
+        return this.varietyRepository
+            .find({
+                relations: ['fruit'],
+            })
+            .then((varieties) => {
+                return varieties.map((variety) => ({
+                    id: variety.id,
+                    name: variety.name,
+                    fruit: {
+                        id: variety.fruit.id,
+                        name: variety.fruit.name,
+                    },
+                    uniqueKey: variety.uniqueKey,
+                }));
+            });
+    }
+    async getVarietyById(id: number): Promise<VarietyModel> {
+        this.logger.log(`Getting variety with id ${id}`);
+        return this.varietyRepository
+            .findOne({
+                where: { id },
+                relations: ['fruit'],
+            })
+            .then((variety) => ({
                 id: variety.id,
                 name: variety.name,
-                fruitId: null, //variety.fruit.id,
-                fruit: null, // variety.fruit.name,
+                fruit: {
+                    id: variety.fruit.id,
+                    name: variety.fruit.name,
+                },
                 uniqueKey: variety.uniqueKey,
             }));
-        });
-    }
-    getVarietyById(id: number): Promise<VarietyModel> {
-        this.logger.log(`Getting variety with id ${id}`);
-        return this.varietyRepository.findOneBy({ id }).then((variety) => ({
-            id: variety.id,
-            name: variety.name,
-            fruitId: null, //variety.fruit.id,
-            fruit: null, //variety.fruit.name,
-            uniqueKey: variety.uniqueKey,
-        }));
     }
 
-    getVarietiesByFruitId(fruitId: number): Promise<VarietyModel[]> {
+    async getVarietiesByFruitId(fruitId: number): Promise<VarietyModel[]> {
         this.logger.log(`Getting varieties by fruit id ${fruitId}`);
         return this.varietyRepository
             .find({
@@ -100,15 +129,27 @@ export class FruitVarietyAdapter
     async createVariety(variety: VarietyModel): Promise<VarietyModel> {
         this.logger.log(`Creating variety ${variety.name}`);
         const fruit = await this.fruitRepository.findOneBy({
-            id: variety.fruitId,
+            id: variety.fruit.id,
         });
 
         if (!fruit) {
-            this.logger.error(`Fruit with id ${variety.fruitId} not found`);
-            throw new Error(`Fruit with id ${variety.fruitId} not found`);
+            this.logger.error(`Fruit with id ${variety.fruit.id} not found`);
+            throw new Error(`Fruit with id ${variety.fruit.id} not found`);
         }
 
         const uniqueKey = `${fruit.name}-${variety.name}`;
+
+        const existingVariety = await this.varietyRepository.findOneBy({
+            uniqueKey,
+        });
+
+        if (existingVariety) {
+            this.logger.error(`Variety with name ${uniqueKey} already exists`);
+            throw new ConflictException(
+                `Variety with name ${uniqueKey} already exists`,
+            );
+        }
+
         const varietyEntity = this.varietyRepository.create({
             name: variety.name,
             fruit,
@@ -118,8 +159,10 @@ export class FruitVarietyAdapter
         return {
             id: savedVariety.id,
             name: savedVariety.name,
-            fruitId: fruit.id,
-            fruit: fruit.name,
+            fruit: {
+                id: fruit.id,
+                name: fruit.name,
+            },
             uniqueKey,
         };
     }

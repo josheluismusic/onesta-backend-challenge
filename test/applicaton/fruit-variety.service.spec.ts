@@ -122,8 +122,7 @@ describe('FruitVarietyService', () => {
                 {
                     id: 1,
                     name: 'Golden',
-                    fruitId: 1,
-                    fruit: 'Apple',
+                    fruit: { id: 1, name: 'Apple' },
                     uniqueKey: '1-Golden',
                 },
             ];
@@ -142,8 +141,7 @@ describe('FruitVarietyService', () => {
             const variety: VarietyModel = {
                 id: 1,
                 name: 'Golden',
-                fruitId: 1,
-                fruit: 'Apple',
+                fruit: { id: 1, name: 'Apple' },
                 uniqueKey: '1-Golden',
             };
             jest.spyOn(getVarietyPort, 'getVarietyById').mockResolvedValue(
@@ -172,8 +170,7 @@ describe('FruitVarietyService', () => {
                 {
                     id: 1,
                     name: 'Golden',
-                    fruitId: 1,
-                    fruit: 'Apple',
+                    fruit: { id: 1, name: 'Apple' },
                     uniqueKey: '1-Golden',
                 },
             ];
@@ -195,8 +192,7 @@ describe('FruitVarietyService', () => {
             const variety: VarietyModel = {
                 id: 1,
                 name: 'Golden',
-                fruitId: 1,
-                fruit: 'Apple',
+                fruit: { id: 1, name: 'Apple' },
                 uniqueKey: '1-Golden',
             };
             const createVarietySpy = jest
@@ -212,8 +208,7 @@ describe('FruitVarietyService', () => {
             const variety: VarietyModel = {
                 id: 1,
                 name: 'Golden',
-                fruitId: 1,
-                fruit: 'Apple',
+                fruit: { id: 1, name: 'Apple' },
                 uniqueKey: '1-Golden',
             };
             jest.spyOn(createVarietyPort, 'createVariety').mockRejectedValue(

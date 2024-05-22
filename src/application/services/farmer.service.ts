@@ -11,7 +11,7 @@ import { CreateFarmerPort, GetFarmerPort } from '../ports/out/Farmer.out';
 import {
     CreateFarmerUseCase,
     GetFarmerUseCase,
-} from '../ports/in/farmer.user-case';
+} from '../ports/in/farmer.use-case';
 
 @Injectable()
 export class FarmerService implements CreateFarmerUseCase, GetFarmerUseCase {

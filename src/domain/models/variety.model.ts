@@ -1,7 +1,6 @@
 export class VarietyModel {
     id?: number;
     name: string;
-    fruitId: number;
-    fruit?: string;
+    fruit?: { id: number; name?: string };
     uniqueKey?: string;
 }

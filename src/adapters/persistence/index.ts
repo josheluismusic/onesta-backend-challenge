@@ -1,6 +1,7 @@
 import { FruitVarietyAdapter } from './fruit-variety.adapter';
 import { ClientAdapter } from './client.adapter';
 import { FarmerAdapter } from './farmer.adapter';
+import { FieldAdapter } from './field.adapter';
 
 export const FruitVarietyAdapterProvider = [
     {
@@ -40,5 +41,16 @@ export const FarmerAdapterProvider = [
     {
         provide: 'GetFarmerPort',
         useClass: FarmerAdapter,
+    },
+];
+
+export const FieldAdapterProvider = [
+    {
+        provide: 'CreateFieldPort',
+        useClass: FieldAdapter,
+    },
+    {
+        provide: 'GetFieldPort',
+        useClass: FieldAdapter,
     },
 ];

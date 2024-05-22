@@ -1,5 +1,6 @@
 import { ClientService } from './client.service';
 import { FarmerService } from './farmer.service';
+import { FieldService } from './field.service';
 import { FruitVarietyService } from './fruit-variety.service';
 
 export const FruitVarietyServiceProvider = [
@@ -40,5 +41,16 @@ export const FarmerServiceProvider = [
     {
         provide: 'GetFarmerUseCase',
         useClass: FarmerService,
+    },
+];
+
+export const FieldServiceProvider = [
+    {
+        provide: 'CreateFieldUseCase',
+        useClass: FieldService,
+    },
+    {
+        provide: 'GetFieldUseCase',
+        useClass: FieldService,
     },
 ];

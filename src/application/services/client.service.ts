@@ -9,7 +9,7 @@ import {
 import {
     CreateClientUseCase,
     GetClientUseCase,
-} from '../ports/in/client.user-case';
+} from '../ports/in/client.use-case';
 import { ClientModel } from 'src/domain/models/client.model';
 import { CreateClientPort, GetClientPort } from '../ports/out/client.out';
 
