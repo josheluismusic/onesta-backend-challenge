@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { ClientAdapter } from 'src/adapters/persistence/client.adapter';
 import { ClientEntity } from 'src/adapters/persistence/entities';
 import { ClientModel } from 'src/domain/models/client.model';
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('ClientAdapter', () => {
     let adapter: ClientAdapter;
@@ -42,6 +42,7 @@ describe('ClientAdapter', () => {
             const clientEntity = new ClientEntity();
             Object.assign(clientEntity, client);
 
+            jest.spyOn(clientRepository, 'findOneBy').mockResolvedValue(null); // No existing client
             jest.spyOn(clientRepository, 'create').mockReturnValue(
                 clientEntity,
             );
@@ -51,8 +52,33 @@ describe('ClientAdapter', () => {
 
             const result = await adapter.createClient(client);
             expect(result).toEqual(client);
+            expect(clientRepository.findOneBy).toHaveBeenCalledWith({
+                email: client.email,
+            });
             expect(clientRepository.create).toHaveBeenCalledWith(client);
             expect(clientRepository.save).toHaveBeenCalledWith(clientEntity);
+        });
+
+        it('should throw ConflictException if client with email already exists', async () => {
+            const client: ClientModel = {
+                id: 1,
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john.doe@example.com',
+            };
+            const clientEntity = new ClientEntity();
+            Object.assign(clientEntity, client);
+
+            jest.spyOn(clientRepository, 'findOneBy').mockResolvedValue(
+                clientEntity,
+            ); // Existing client
+
+            await expect(adapter.createClient(client)).rejects.toThrow(
+                ConflictException,
+            );
+            expect(clientRepository.findOneBy).toHaveBeenCalledWith({
+                email: client.email,
+            });
         });
     });
 

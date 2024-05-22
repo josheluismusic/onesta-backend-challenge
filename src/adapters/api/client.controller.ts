@@ -2,6 +2,8 @@ import {
     Body,
     Controller,
     Get,
+    HttpCode,
+    HttpStatus,
     Inject,
     InternalServerErrorException,
     Logger,
@@ -26,11 +28,12 @@ export class ClientController {
     ) {}
 
     @Post('')
+    @HttpCode(HttpStatus.NO_CONTENT)
     async createClient(
         @Body() createClientRequestBodyDTO: CreateClientRequestBodyDTO,
     ): Promise<void> {
         try {
-            this.createClientUseCase.createClient({
+            await this.createClientUseCase.createClient({
                 firstName: createClientRequestBodyDTO.firstName,
                 lastName: createClientRequestBodyDTO.lastName,
                 email: createClientRequestBodyDTO.email,
@@ -44,6 +47,7 @@ export class ClientController {
     }
 
     @Get('/:id')
+    @HttpCode(HttpStatus.OK)
     async getClient(@Param('id') id: number) {
         try {
             return this.getClientUseCase.getClient(id);
@@ -57,6 +61,7 @@ export class ClientController {
     }
 
     @Get('')
+    @HttpCode(HttpStatus.OK)
     async getAllClients() {
         try {
             return this.getClientUseCase.getAllClients();

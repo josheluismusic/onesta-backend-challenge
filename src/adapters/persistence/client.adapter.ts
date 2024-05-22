@@ -6,7 +6,7 @@ import { ClientEntity } from './entities';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientModel } from 'src/domain/models/client.model';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 
 export class ClientAdapter implements CreateClientPort, GetClientPort {
     constructor(
@@ -15,6 +15,15 @@ export class ClientAdapter implements CreateClientPort, GetClientPort {
     ) {}
 
     async createClient(client: ClientModel): Promise<ClientModel> {
+        const clientExists = await this.clientRepository.findOneBy({
+            email: client.email,
+        });
+        if (clientExists) {
+            throw new ConflictException(
+                'Client with this email already exists',
+            );
+        }
+
         const newClient = this.clientRepository.create(client);
         await this.clientRepository.save(newClient);
         return {

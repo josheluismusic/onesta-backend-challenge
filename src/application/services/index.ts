@@ -1,4 +1,5 @@
 import { ClientService } from './client.service';
+import { FarmerService } from './farmer.service';
 import { FruitVarietyService } from './fruit-variety.service';
 
 export const FruitVarietyServiceProvider = [
@@ -28,5 +29,16 @@ export const ClientServiceProvider = [
     {
         provide: 'GetClientUseCase',
         useClass: ClientService,
+    },
+];
+
+export const FarmerServiceProvider = [
+    {
+        provide: 'CreateFarmerUseCase',
+        useClass: FarmerService,
+    },
+    {
+        provide: 'GetFarmerUseCase',
+        useClass: FarmerService,
     },
 ];
