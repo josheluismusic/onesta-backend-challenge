@@ -6,12 +6,14 @@ import {
     FarmerAdapterProvider,
     FieldAdapterProvider,
     FruitVarietyAdapterProvider,
+    HarvestAdapterProvider,
 } from './adapters/persistence';
 import {
     ClientServiceProvider,
     FarmerServiceProvider,
     FieldServiceProvider,
     FruitVarietyServiceProvider,
+    HarvestServiceProvider,
 } from './application/services';
 import {
     ClientEntity,
@@ -24,24 +26,29 @@ import { ClientController } from './adapters/api/client.controller';
 import { FarmerController } from './adapters/api/farmer.controller';
 import { FieldEntity } from './adapters/persistence/entities/filed.entity';
 import { FieldController } from './adapters/api/field.controller';
+import { HarvestEntity } from './adapters/persistence/entities/harvest.entity';
+import { HarvestController } from './adapters/api/harvest.controller';
 
 const adapters = [
     ...FruitVarietyAdapterProvider,
     ...ClientAdapterProvider,
     ...FarmerAdapterProvider,
     ...FieldAdapterProvider,
+    ...HarvestAdapterProvider,
 ];
 const services = [
     ...FruitVarietyServiceProvider,
     ...ClientServiceProvider,
     ...FarmerServiceProvider,
     ...FieldServiceProvider,
+    ...HarvestServiceProvider,
 ];
 const controllers = [
     FruitVarietyController,
     ClientController,
     FarmerController,
     FieldController,
+    HarvestController,
 ];
 
 const ormEntities = [
@@ -50,6 +57,7 @@ const ormEntities = [
     ClientEntity,
     FarmerEntity,
     FieldEntity,
+    HarvestEntity,
 ];
 
 @Module({

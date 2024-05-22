@@ -2,10 +2,12 @@ import {
     Column,
     Entity,
     ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
     Unique,
 } from 'typeorm';
 import { FarmerEntity } from './farmer.entity';
+import { HarvestEntity } from './harvest.entity';
 
 @Entity({
     name: 'fields',
@@ -23,4 +25,7 @@ export class FieldEntity {
 
     @Column()
     location: string;
+
+    @OneToMany(() => HarvestEntity, (harvest) => harvest.field)
+    harvests: HarvestEntity[];
 }

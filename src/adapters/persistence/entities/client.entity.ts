@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { HarvestEntity } from './harvest.entity';
 
 @Entity({
     name: 'clients',
@@ -15,4 +16,7 @@ export class ClientEntity {
 
     @Column({ unique: true })
     email: string;
+
+    @OneToMany(() => HarvestEntity, (harvest) => harvest.client)
+    harvests: HarvestEntity[];
 }
