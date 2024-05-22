@@ -25,6 +25,10 @@ import {
     CreateFruitPort,
     CreateVarietyPort,
 } from '../ports/out/fruit-variety.out';
+import { ClientModel } from 'src/domain/models/client.model';
+import { FarmerModel } from 'src/domain/models/Farmer.model';
+import { FieldModel } from 'src/domain/models/field.mode';
+import { FruitModel, VarietyModel } from 'src/domain/models';
 
 @Injectable()
 export class HarvestService
@@ -52,10 +56,22 @@ export class HarvestService
     ) {}
 
     async getHarvest(id: number): Promise<HarvestModel> {
-        return this.getHarvestPort.getHarvest(id);
+        try {
+            return this.getHarvestPort.getHarvest(id);
+        } catch (error) {
+            this.logger.error(error);
+            throw new InternalServerErrorException('Error getting harvest');
+        }
     }
     async getAllHarvests(): Promise<HarvestModel[]> {
-        return this.getHarvestPort.getAllHarvests();
+        try {
+            return this.getHarvestPort.getAllHarvests();
+        } catch (error) {
+            this.logger.error(error);
+            throw new InternalServerErrorException(
+                'Error getting all harvests',
+            );
+        }
     }
     async createHarvest(harvest: HarvestModel): Promise<HarvestModel> {
         try {
@@ -70,8 +86,8 @@ export class HarvestService
 
         const results = await this.processFile(filePath);
 
-        this.logger.log(`Processing ${results.length} records`);
         for (const result of results) {
+            this.logger.log(`Processing record number: ${result.recordNumber}`);
             await this.processHarvestUploadModel(result);
         }
     }
@@ -84,6 +100,7 @@ export class HarvestService
                 .pipe(csv({ separator: ';' }))
                 .on('data', (data) =>
                     results.push({
+                        recordNumber: results.length + 1,
                         farmerEmail: data['Mail Agricultor'],
                         farmerFirstName: data['Nombre Agricultor'],
                         farmerLastName: data['Apellido Agricultor'],
@@ -110,42 +127,72 @@ export class HarvestService
     }
 
     async processHarvestUploadModel(haervestUpload: HarvestUploadModel) {
-        if (
-            haervestUpload.clientEmail === '' ||
-            haervestUpload.farmerEmail === '' ||
-            haervestUpload.fieldName === '' ||
-            haervestUpload.harvestedFruit === ''
-        ) {
+        let client: ClientModel;
+        let farmer: FarmerModel;
+        let field: FieldModel;
+        let fruit: FruitModel;
+        let variety: VarietyModel;
+
+        if (haervestUpload.clientEmail) {
+            client = await this.createClientPort.getOrCreateClientByEmail({
+                email: haervestUpload.clientEmail,
+                firstName: haervestUpload.clientFirstName,
+                lastName: haervestUpload.clientLastName,
+            });
+        }
+
+        if (!client) {
+            this.logger.error(
+                `Record [${haervestUpload.recordNumber}] withoutCLIENT. Skipping...`,
+            );
             return;
         }
 
-        const client = await this.createClientPort.getOrCreateClientByEmail({
-            email: haervestUpload.clientEmail,
-            firstName: haervestUpload.clientFirstName,
-            lastName: haervestUpload.clientLastName,
-        });
-
-        const farmer = await this.createFarmerPort.getOrCreateFarmerByEmail({
-            email: haervestUpload.farmerEmail,
-            firstName: haervestUpload.farmerFirstName,
-            lastName: haervestUpload.farmerLastName,
-        });
-
-        const field =
-            await this.createFieldPort.getOrCreateFieldByNameAndLocation({
-                name: haervestUpload.fieldName,
-                location: haervestUpload.fieldLocation,
-                farmer: { id: farmer.id },
+        if (haervestUpload.farmerEmail) {
+            farmer = await this.createFarmerPort.getOrCreateFarmerByEmail({
+                email: haervestUpload.farmerEmail,
+                firstName: haervestUpload.farmerFirstName,
+                lastName: haervestUpload.farmerLastName,
             });
+        }
 
-        const fruit = await this.createFruitPort.getOrCreateFruitByName(
-            haervestUpload.harvestedFruit,
-        );
+        if (
+            haervestUpload.fieldName &&
+            haervestUpload.fieldLocation &&
+            farmer
+        ) {
+            field =
+                await this.createFieldPort.getOrCreateFieldByNameAndLocation({
+                    name: haervestUpload.fieldName,
+                    location: haervestUpload.fieldLocation,
+                    farmer: { id: farmer.id },
+                });
+        }
 
-        const variety = await this.createVarietyPort.getOrCreateVariety({
-            name: haervestUpload.harvestedVariety,
-            fruit: fruit,
-        });
+        if (!field) {
+            this.logger.error(
+                `Record [${haervestUpload.recordNumber}] without FIELD. Skipping...`,
+            );
+            return;
+        }
+
+        if (haervestUpload.harvestedFruit && haervestUpload.harvestedVariety) {
+            fruit = await this.createFruitPort.getOrCreateFruitByName(
+                haervestUpload.harvestedFruit,
+            );
+
+            variety = await this.createVarietyPort.getOrCreateVariety({
+                name: haervestUpload.harvestedVariety,
+                fruit: fruit,
+            });
+        }
+
+        if (!variety) {
+            this.logger.error(
+                `Record [${haervestUpload.recordNumber}] without VARIETY. Skipping...`,
+            );
+            return;
+        }
 
         await this.createHarvest({
             fruitVariety: { id: variety.id },
@@ -153,5 +200,9 @@ export class HarvestService
             client: { id: client.id },
             origin: 'FILE',
         });
+
+        this.logger.log(
+            `Record [${haervestUpload.recordNumber}] processed successfully`,
+        );
     }
 }

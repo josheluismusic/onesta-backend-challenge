@@ -28,7 +28,7 @@ export class FruitVarietyAdapter
 
     async getOrCreateFruitByName(name: string): Promise<FruitModel> {
         const fruit = await this.fruitRepository.findOne({
-            where: { name },
+            where: { name: name.toUpperCase() },
             relations: ['varieties'],
         });
         if (fruit) {
@@ -69,18 +69,24 @@ export class FruitVarietyAdapter
     }
 
     async createFruit(name: string): Promise<FruitModel> {
-        this.logger.log(`Creating fruit ${name}`);
+        const fruitToUpperCase = name.toUpperCase();
 
-        const existingFruit = await this.fruitRepository.findOneBy({ name });
+        this.logger.log(`Creating fruit ${fruitToUpperCase}`);
+
+        const existingFruit = await this.fruitRepository.findOneBy({
+            name: fruitToUpperCase,
+        });
 
         if (existingFruit) {
-            this.logger.error(`Fruit with name ${name} already exists`);
+            this.logger.error(
+                `Fruit with name ${fruitToUpperCase} already exists`,
+            );
             throw new ConflictException(
-                `Fruit with name ${name} already exists`,
+                `Fruit with name ${fruitToUpperCase} already exists`,
             );
         }
 
-        const fruit = this.fruitRepository.create({ name });
+        const fruit = this.fruitRepository.create({ name: fruitToUpperCase });
         const savedFruit = await this.fruitRepository.save(fruit);
         return {
             id: savedFruit.id,
@@ -205,7 +211,8 @@ export class FruitVarietyAdapter
             throw new Error(`Fruit with id ${variety.fruit.id} not found`);
         }
 
-        const uniqueKey = `${fruit.name}-${variety.name}`;
+        const uniqueKey =
+            `${fruit.name}-${variety.name.replace(' ', '-')}`.toUpperCase();
         return { uniqueKey, fruit };
     }
 }

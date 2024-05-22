@@ -4,6 +4,7 @@ import {
     Injectable,
     InternalServerErrorException,
     Logger,
+    NotFoundException,
 } from '@nestjs/common';
 
 import { FarmerModel } from 'src/domain/models/Farmer.model';
@@ -24,17 +25,33 @@ export class FarmerService implements CreateFarmerUseCase, GetFarmerUseCase {
     ) {}
 
     async getFarmer(id: number): Promise<FarmerModel> {
-        this.logger.log(`Getting Farmer by id ${id}`);
-        return await this.getFarmerPort.getFarmer(id);
+        try {
+            this.logger.log(`Getting Farmer by id ${id}`);
+            return await this.getFarmerPort.getFarmer(id);
+        } catch (error) {
+            this.logger.error(`Failed to get Farmer by id ${id}`, error.stack);
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            throw new InternalServerErrorException(error.message);
+        }
     }
     async getAllFarmers(): Promise<FarmerModel[]> {
-        this.logger.log('Getting all Farmers');
-        return this.getFarmerPort.getAllFarmers();
+        try {
+            this.logger.log('Getting all Farmers');
+            return this.getFarmerPort.getAllFarmers();
+        } catch (error) {
+            this.logger.error('Failed to get all Farmers', error.stack);
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            throw new InternalServerErrorException(error.message);
+        }
     }
-    async createFarmer(Farmer: FarmerModel): Promise<void> {
+    async createFarmer(farmer: FarmerModel): Promise<void> {
         try {
             this.logger.log('Creating Farmer');
-            const newFarmer = await this.createFarmerPort.createFarmer(Farmer);
+            const newFarmer = await this.createFarmerPort.createFarmer(farmer);
             if (!newFarmer) {
                 throw new Error('Farmer not created');
             }

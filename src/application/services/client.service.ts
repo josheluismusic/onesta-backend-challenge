@@ -43,6 +43,9 @@ export class ClientService implements CreateClientUseCase, GetClientUseCase {
             return this.getClientPort.getAllClients();
         } catch (error) {
             this.logger.error('Failed to get all clients', error.stack);
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
             throw new InternalServerErrorException(error.message);
         }
     }

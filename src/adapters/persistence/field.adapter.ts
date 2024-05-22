@@ -21,8 +21,14 @@ export class FieldAdapter implements CreateFieldPort, GetFieldPort {
     async getOrCreateFieldByNameAndLocation(
         field: FieldModel,
     ): Promise<FieldModel> {
+        const name = field.name.toUpperCase();
+        const location = field.location.toUpperCase();
+
         const fieldExist = await this.fieldRepository.findOne({
-            where: { name: field.name, location: field.location },
+            where: {
+                name,
+                location,
+            },
             relations: ['farmer'],
         });
 
@@ -35,18 +41,21 @@ export class FieldAdapter implements CreateFieldPort, GetFieldPort {
             };
         }
 
-        return this.createField(field);
+        return this.createField({ ...field, name, location });
     }
 
     async createField(field: FieldModel): Promise<FieldModel> {
+        const name = field.name.toUpperCase();
+        const location = field.location.toUpperCase();
+
         const fieldExist = await this.fieldRepository.findOneBy({
-            name: field.name,
-            location: field.location,
+            name,
+            location,
         });
 
         if (fieldExist) {
             throw new ConflictException(
-                `Field with this name ${field.name} and location ${field.location} already exists`,
+                `Field with this name ${name} and location ${location} already exists`,
             );
         }
 
@@ -61,11 +70,13 @@ export class FieldAdapter implements CreateFieldPort, GetFieldPort {
         }
 
         const newField = this.fieldRepository.create({
-            name: field.name,
-            location: field.location,
+            name,
+            location,
             farmer: farmer,
         });
+
         await this.fieldRepository.save(newField);
+
         return {
             id: newField.id,
             name: newField.name,

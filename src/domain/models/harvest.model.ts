@@ -21,6 +21,7 @@ export class HarvestModel {
 }
 
 export class HarvestUploadModel {
+    recordNumber: number;
     // Mail Agricultor
     farmerEmail: string;
 

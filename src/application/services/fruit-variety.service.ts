@@ -3,6 +3,7 @@ import {
     Injectable,
     InternalServerErrorException,
     Logger,
+    NotFoundException,
 } from '@nestjs/common';
 import {
     CreateFruitPort,
@@ -47,7 +48,7 @@ export class FruitVarietyService
     async getFruit(id: number): Promise<FruitModel> {
         const fruit = await this.getFruitPort.getFruit(id);
         if (!fruit) {
-            throw new Error(`Fruit with id ${id} not found`);
+            throw new NotFoundException(`Fruit with id ${id} not found`);
         }
         return fruit;
     }
@@ -62,19 +63,29 @@ export class FruitVarietyService
     }
 
     async getAllVarieties(): Promise<VarietyModel[]> {
-        return this.getVarietyPort.getAllVarieties();
+        try {
+            return this.getVarietyPort.getAllVarieties();
+        } catch (error) {
+            this.logger.error(error.message);
+            throw new InternalServerErrorException(error.message);
+        }
     }
 
     async getVariety(id: number): Promise<VarietyModel> {
         const variety = await this.getVarietyPort.getVarietyById(id);
         if (!variety) {
-            throw new Error(`Variety with id ${id} not found`);
+            throw new NotFoundException(`Variety with id ${id} not found`);
         }
         return variety;
     }
 
     async GetVarietiesByFruitId(fruitId: number): Promise<VarietyModel[]> {
-        return this.getVarietyPort.getVarietiesByFruitId(fruitId);
+        try {
+            return this.getVarietyPort.getVarietiesByFruitId(fruitId);
+        } catch (error) {
+            this.logger.error(error.message);
+            throw new InternalServerErrorException(error.message);
+        }
     }
 
     async createVariety(variety: VarietyModel): Promise<void> {
