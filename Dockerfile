@@ -1,10 +1,7 @@
-## Stage of building
 FROM node:18-alpine as builder
 
-# Install PNPM
 RUN npm install -g pnpm
 
-# Stage 1: Build backend
 WORKDIR /backend
 
 COPY ./package.json .
@@ -15,7 +12,6 @@ COPY . .
 
 RUN pnpm build
 
-## Production Stage: Run the app
 FROM node:18-alpine as production
 
 WORKDIR /server

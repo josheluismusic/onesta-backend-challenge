@@ -1,10 +1,10 @@
 {
   "name": "onesta-backend-challenge",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -49,6 +49,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.5.0",
+    "jest-junit": "^16.0.0",
     "prettier": "^3.0.0",
     "source-map-support": "^0.5.21",
     "supertest": "^6.3.3",
@@ -78,6 +79,16 @@
       "^src/(.*)$": "<rootDir>/src/$1"
     },
     "coverageDirectory": "../coverage",
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "./test-results/junit",
+          "outputName": "results.xml"
+        }
+      ]
+    ],
     "testEnvironment": "node"
   }
 }
