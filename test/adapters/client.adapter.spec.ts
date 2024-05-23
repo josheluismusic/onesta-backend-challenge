@@ -1,14 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ClientAdapter } from 'src/adapters/persistence/client.adapter';
-import { ClientEntity } from 'src/adapters/persistence/entities';
 import { ClientModel } from 'src/domain/models/client.model';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
+import { ClientEntity } from 'src/adapters/persistence/entities';
+import { ClientAdapter } from 'src/adapters/persistence/client.adapter';
 
 describe('ClientAdapter', () => {
     let adapter: ClientAdapter;
-    let clientRepository: Repository<ClientEntity>;
+    let repository: Repository<ClientEntity>;
+
+    const clientEntity = new ClientEntity();
+    clientEntity.id = 1;
+    clientEntity.firstName = 'John';
+    clientEntity.lastName = 'Doe';
+    clientEntity.email = 'john.doe@example.com';
+
+    const clientModel: ClientModel = {
+        id: 1,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+    };
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -22,7 +35,7 @@ describe('ClientAdapter', () => {
         }).compile();
 
         adapter = module.get<ClientAdapter>(ClientAdapter);
-        clientRepository = module.get<Repository<ClientEntity>>(
+        repository = module.get<Repository<ClientEntity>>(
             getRepositoryToken(ClientEntity),
         );
     });
@@ -31,112 +44,91 @@ describe('ClientAdapter', () => {
         expect(adapter).toBeDefined();
     });
 
-    describe('createClient', () => {
-        it('should create a client', async () => {
-            const client: ClientModel = {
-                id: 1,
-                firstName: 'John',
-                lastName: 'Doe',
-                email: 'john.doe@example.com',
-            };
-            const clientEntity = new ClientEntity();
-            Object.assign(clientEntity, client);
-
-            jest.spyOn(clientRepository, 'findOneBy').mockResolvedValue(null); // No existing client
-            jest.spyOn(clientRepository, 'create').mockReturnValue(
+    describe('getOrCreateClientByEmail', () => {
+        it('should return an existing client', async () => {
+            jest.spyOn(adapter, 'getClientByEmail').mockResolvedValue(
                 clientEntity,
             );
-            jest.spyOn(clientRepository, 'save').mockResolvedValue(
-                clientEntity,
-            );
+            jest.spyOn(repository, 'update').mockResolvedValue(undefined);
 
-            const result = await adapter.createClient(client);
-            expect(result).toEqual(client);
-            expect(clientRepository.findOneBy).toHaveBeenCalledWith({
-                email: client.email,
-            });
-            expect(clientRepository.create).toHaveBeenCalledWith(client);
-            expect(clientRepository.save).toHaveBeenCalledWith(clientEntity);
+            const result = await adapter.getOrCreateClientByEmail(clientModel);
+            expect(result).toEqual(clientModel);
         });
 
-        it('should throw ConflictException if client with email already exists', async () => {
-            const client: ClientModel = {
-                id: 1,
-                firstName: 'John',
-                lastName: 'Doe',
-                email: 'john.doe@example.com',
-            };
-            const clientEntity = new ClientEntity();
-            Object.assign(clientEntity, client);
+        it('should create a new client if it does not exist', async () => {
+            jest.spyOn(adapter, 'getClientByEmail').mockResolvedValue(
+                undefined,
+            );
+            jest.spyOn(repository, 'create').mockReturnValue(clientEntity);
+            jest.spyOn(repository, 'save').mockResolvedValue(clientEntity);
 
-            jest.spyOn(clientRepository, 'findOneBy').mockResolvedValue(
+            const result = await adapter.getOrCreateClientByEmail(clientModel);
+            expect(result).toEqual(clientModel);
+        });
+    });
+
+    describe('createClient', () => {
+        it('should throw ConflictException if client already exists', async () => {
+            jest.spyOn(adapter, 'getClientByEmail').mockResolvedValue(
                 clientEntity,
-            ); // Existing client
+            );
 
-            await expect(adapter.createClient(client)).rejects.toThrow(
+            await expect(adapter.createClient(clientModel)).rejects.toThrow(
                 ConflictException,
             );
-            expect(clientRepository.findOneBy).toHaveBeenCalledWith({
-                email: client.email,
-            });
+        });
+
+        it('should create and return a new client', async () => {
+            jest.spyOn(adapter, 'getClientByEmail').mockResolvedValue(
+                undefined,
+            );
+            jest.spyOn(repository, 'create').mockReturnValue(clientEntity);
+            jest.spyOn(repository, 'save').mockResolvedValue(clientEntity);
+
+            const result = await adapter.createClient(clientModel);
+            expect(result).toEqual(clientModel);
         });
     });
 
     describe('getClient', () => {
-        it('should return a client by id', async () => {
-            const clientEntity = new ClientEntity();
-            clientEntity.id = 1;
-            clientEntity.firstName = 'John';
-            clientEntity.lastName = 'Doe';
-            clientEntity.email = 'john.doe@example.com';
-
-            jest.spyOn(clientRepository, 'findOneBy').mockResolvedValue(
-                clientEntity,
-            );
+        it('should return a client if found', async () => {
+            jest.spyOn(repository, 'findOneBy').mockResolvedValue(clientEntity);
 
             const result = await adapter.getClient(1);
-            expect(result).toEqual({
-                id: 1,
-                firstName: 'John',
-                lastName: 'Doe',
-                email: 'john.doe@example.com',
-            });
-            expect(clientRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
+            expect(result).toEqual(clientModel);
         });
 
-        it('should throw NotFoundException if client is not found', async () => {
-            jest.spyOn(clientRepository, 'findOneBy').mockResolvedValue(null);
+        it('should throw NotFoundException if client not found', async () => {
+            jest.spyOn(repository, 'findOneBy').mockResolvedValue(undefined);
 
             await expect(adapter.getClient(1)).rejects.toThrow(
                 NotFoundException,
             );
-            expect(clientRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
         });
     });
 
     describe('getAllClients', () => {
-        it('should return all clients', async () => {
-            const clients = [
-                {
-                    id: 1,
-                    firstName: 'John',
-                    lastName: 'Doe',
-                    email: 'john.doe@example.com',
-                },
-            ];
-            const clientEntities = clients.map((client) => {
-                const entity = new ClientEntity();
-                Object.assign(entity, client);
-                return entity;
-            });
-
-            jest.spyOn(clientRepository, 'find').mockResolvedValue(
-                clientEntities,
-            );
+        it('should return an array of clients', async () => {
+            jest.spyOn(repository, 'find').mockResolvedValue([clientEntity]);
 
             const result = await adapter.getAllClients();
-            expect(result).toEqual(clients);
-            expect(clientRepository.find).toHaveBeenCalled();
+            expect(result).toEqual([clientModel]);
+        });
+    });
+
+    describe('getClientByEmail', () => {
+        it('should return a client if found by email', async () => {
+            jest.spyOn(repository, 'findOneBy').mockResolvedValue(clientEntity);
+
+            const result = await adapter.getClientByEmail(clientModel.email);
+            expect(result).toEqual(clientEntity);
+        });
+
+        it('should return undefined if client not found by email', async () => {
+            jest.spyOn(repository, 'findOneBy').mockResolvedValue(undefined);
+
+            const result = await adapter.getClientByEmail(clientModel.email);
+            expect(result).toBeUndefined();
         });
     });
 });

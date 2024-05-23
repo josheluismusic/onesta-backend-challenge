@@ -1,4 +1,4 @@
-import { FarmerModel } from '../../../domain/models/Farmer.model';
+import { FarmerModel } from '../../../domain/models/farmer.model';
 
 export interface CreateFarmerPort {
     createFarmer(Farmer: FarmerModel): Promise<FarmerModel>;

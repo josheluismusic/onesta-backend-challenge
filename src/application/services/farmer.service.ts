@@ -7,8 +7,8 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 
-import { FarmerModel } from 'src/domain/models/Farmer.model';
-import { CreateFarmerPort, GetFarmerPort } from '../ports/out/Farmer.out';
+import { FarmerModel } from 'src/domain/models/farmer.model';
+import { CreateFarmerPort, GetFarmerPort } from '../ports/out/farmer.out';
 import {
     CreateFarmerUseCase,
     GetFarmerUseCase,

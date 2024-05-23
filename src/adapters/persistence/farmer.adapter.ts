@@ -1,12 +1,13 @@
+import { InjectRepository } from '@nestjs/typeorm';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
+
 import {
     CreateFarmerPort,
     GetFarmerPort,
-} from 'src/application/ports/out/Farmer.out';
+} from 'src/application/ports/out/farmer.out';
 import { FarmerEntity } from './entities';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { FarmerModel } from 'src/domain/models/Farmer.model';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { FarmerModel } from 'src/domain/models/farmer.model';
 
 export class FarmerAdapter implements CreateFarmerPort, GetFarmerPort {
     constructor(

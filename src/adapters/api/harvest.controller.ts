@@ -31,7 +31,7 @@ export class HarvestController {
     async createHarvest(
         @Body() createHarvestRequestBodyDTO: CreateHarvestRequestBodyDTO,
     ) {
-        return this.createHarvestUseCase.createHarvest({
+        return await this.createHarvestUseCase.createHarvest({
             fruitVariety: { id: createHarvestRequestBodyDTO.fruitVarietyId },
             field: { id: createHarvestRequestBodyDTO.fieldId },
             client: { id: createHarvestRequestBodyDTO.clientId },
@@ -41,12 +41,12 @@ export class HarvestController {
 
     @Get(':id')
     async getHarvest(@Param('id') id: number) {
-        return this.getHarvestUseCase.getHarvest(id);
+        return await this.getHarvestUseCase.getHarvest(id);
     }
 
     @Get()
     async getAllHarvests() {
-        return this.getHarvestUseCase.getAllHarvests();
+        return await this.getHarvestUseCase.getAllHarvests();
     }
 
     @Post('upload')

@@ -1,4 +1,4 @@
-import { FarmerModel } from 'src/domain/models/Farmer.model';
+import { FarmerModel } from 'src/domain/models/farmer.model';
 
 export interface CreateFarmerUseCase {
     createFarmer(farmer: FarmerModel): Promise<void>;

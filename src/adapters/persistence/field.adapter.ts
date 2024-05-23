@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import {
     CreateFieldPort,
     GetFieldPort,
@@ -92,6 +96,11 @@ export class FieldAdapter implements CreateFieldPort, GetFieldPort {
                 relations: ['farmer'],
             })
             .then((field) => {
+                if (!field) {
+                    throw new NotFoundException(
+                        `Field with id ${id} not found`,
+                    );
+                }
                 return {
                     id: field.id,
                     name: field.name,

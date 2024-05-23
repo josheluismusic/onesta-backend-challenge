@@ -1,12 +1,13 @@
+import { NotFoundException, ConflictException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
 import {
     CreateClientPort,
     GetClientPort,
 } from 'src/application/ports/out/client.out';
 import { ClientEntity } from './entities';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ClientModel } from 'src/domain/models/client.model';
-import { NotFoundException, ConflictException } from '@nestjs/common';
 
 export class ClientAdapter implements CreateClientPort, GetClientPort {
     constructor(

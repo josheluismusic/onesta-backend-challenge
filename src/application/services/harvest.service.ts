@@ -18,7 +18,7 @@ import {
     HarvestUploadModel,
 } from 'src/domain/models/harvest.model';
 import { CreateClientPort } from '../ports/out/client.out';
-import { CreateFarmerPort } from '../ports/out/Farmer.out';
+import { CreateFarmerPort } from '../ports/out/farmer.out';
 import { CreateHarvestPort, GetHarvestPort } from '../ports/out/harvest.out';
 import { CreateFieldPort } from '../ports/out/field.out';
 import {
@@ -26,7 +26,7 @@ import {
     CreateVarietyPort,
 } from '../ports/out/fruit-variety.out';
 import { ClientModel } from 'src/domain/models/client.model';
-import { FarmerModel } from 'src/domain/models/Farmer.model';
+import { FarmerModel } from 'src/domain/models/farmer.model';
 import { FieldModel } from 'src/domain/models/field.mode';
 import { FruitModel, VarietyModel } from 'src/domain/models';
 
@@ -84,11 +84,18 @@ export class HarvestService
     async uploadHarvestFile(filePath: string): Promise<void> {
         this.logger.log(`Uploading file: ${filePath}`);
 
-        const results = await this.processFile(filePath);
+        try {
+            const results = await this.processFile(filePath);
 
-        for (const result of results) {
-            this.logger.log(`Processing record number: ${result.recordNumber}`);
-            await this.processHarvestUploadModel(result);
+            for (const result of results) {
+                this.logger.log(
+                    `Processing record number: ${result.recordNumber}`,
+                );
+                await this.processHarvestUploadModel(result);
+            }
+        } catch (error) {
+            this.logger.error(error);
+            throw new InternalServerErrorException('Error processing file');
         }
     }
 

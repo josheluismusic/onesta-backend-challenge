@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+    ConflictException,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FruitEntity, VarietyEntity } from './entities';
@@ -46,11 +51,20 @@ export class FruitVarietyAdapter
         this.logger.log(`Getting fruit with id ${id}`);
         return this.fruitRepository
             .findOne({ where: { id }, relations: ['varieties'] })
-            .then((fruit) => ({
-                id: fruit.id,
-                name: fruit.name,
-                varieties: fruit.varieties.map((variety) => variety.name),
-            }));
+            .then((fruit) => {
+                if (!fruit) {
+                    this.logger.error(`Fruit with id ${id} not found`);
+                    throw new NotFoundException(
+                        `Fruit with id ${id} not found`,
+                    );
+                }
+
+                return {
+                    id: fruit.id,
+                    name: fruit.name,
+                    varieties: fruit.varieties.map((variety) => variety.name),
+                };
+            });
     }
 
     getAllFruits(): Promise<FruitModel[]> {
@@ -120,15 +134,24 @@ export class FruitVarietyAdapter
                 where: { id },
                 relations: ['fruit'],
             })
-            .then((variety) => ({
-                id: variety.id,
-                name: variety.name,
-                fruit: {
-                    id: variety.fruit.id,
-                    name: variety.fruit.name,
-                },
-                uniqueKey: variety.uniqueKey,
-            }));
+            .then((variety) => {
+                if (!variety) {
+                    this.logger.error(`Variety with id ${id} not found`);
+                    throw new NotFoundException(
+                        `Variety with id ${id} not found`,
+                    );
+                }
+
+                return {
+                    id: variety.id,
+                    name: variety.name,
+                    fruit: {
+                        id: variety.fruit.id,
+                        name: variety.fruit.name,
+                    },
+                    uniqueKey: variety.uniqueKey,
+                };
+            });
     }
 
     async getVarietiesByFruitId(fruitId: number): Promise<VarietyModel[]> {
@@ -160,7 +183,10 @@ export class FruitVarietyAdapter
             return {
                 id: existingVariety.id,
                 name: existingVariety.name,
-                fruit: fruit,
+                fruit: {
+                    id: fruit.id,
+                    name: fruit.name,
+                },
                 uniqueKey,
             };
         }
@@ -208,7 +234,9 @@ export class FruitVarietyAdapter
 
         if (!fruit) {
             this.logger.error(`Fruit with id ${variety.fruit.id} not found`);
-            throw new Error(`Fruit with id ${variety.fruit.id} not found`);
+            throw new ConflictException(
+                `Fruit with id ${variety.fruit.id} not found`,
+            );
         }
 
         const uniqueKey =

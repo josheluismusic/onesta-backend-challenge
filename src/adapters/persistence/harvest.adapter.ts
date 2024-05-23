@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import {
     CreateHarvestPort,
     GetHarvestPort,
@@ -23,43 +27,54 @@ export class HarvestAdapter implements CreateHarvestPort, GetHarvestPort {
     ) {}
 
     async getHarvest(id: number): Promise<HarvestModel> {
-        return this.harvestRepository
-            .findOne({
-                where: { id },
-                relations: ['variety', 'client', 'field'],
-            })
-            .then((harvest) => {
-                if (!harvest) {
-                    return null;
-                }
-                return {
-                    id: harvest.id,
-                    fruitVariety: null,
-                    variety: {
-                        id: harvest.variety.id,
-                        name: harvest.variety.name,
-                    },
-                    field: null,
-                    client: {
-                        id: harvest.client.id,
-                        firstName: harvest.client.firstName,
-                        lastName: harvest.client.lastName,
-                    },
-                    date: harvest.date,
-                    origin: harvest.origin,
-                };
-            });
+        const harvest = await this.harvestRepository.findOne({
+            where: { id },
+            relations: ['variety', 'client', 'field'],
+        });
+        if (!harvest) {
+            throw new NotFoundException(`Harvest with id ${id} not found`);
+        }
+        return {
+            id: harvest.id,
+            fruitVariety: {
+                id: harvest.variety.id,
+                name: harvest.variety.name,
+            },
+            field: {
+                id: harvest.field.id,
+                name: harvest.field.name,
+                location: harvest.field.location,
+            },
+            client: {
+                id: harvest.client.id,
+                firstName: harvest.client.firstName,
+                lastName: harvest.client.lastName,
+            },
+            date: harvest.date,
+            origin: harvest.origin,
+        };
     }
 
-    getAllHarvests(): Promise<HarvestModel[]> {
+    async getAllHarvests(): Promise<HarvestModel[]> {
         return this.harvestRepository
             .find({ relations: ['variety', 'client', 'field'] })
             .then((harvests) => {
                 return harvests.map((harvest) => ({
                     id: harvest.id,
-                    fruitVariety: harvest.variety,
-                    field: harvest.field,
-                    client: harvest.client,
+                    fruitVariety: {
+                        id: harvest.variety.id,
+                        name: harvest.variety.name,
+                    },
+                    field: {
+                        id: harvest.field.id,
+                        name: harvest.field.name,
+                        location: harvest.field.location,
+                    },
+                    client: {
+                        id: harvest.client.id,
+                        firstName: harvest.client.firstName,
+                        lastName: harvest.client.lastName,
+                    },
                     date: harvest.date,
                     origin: harvest.origin,
                 }));

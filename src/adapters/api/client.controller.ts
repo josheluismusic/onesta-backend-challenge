@@ -50,7 +50,7 @@ export class ClientController {
     @HttpCode(HttpStatus.OK)
     async getClient(@Param('id') id: number) {
         try {
-            return this.getClientUseCase.getClient(id);
+            return await this.getClientUseCase.getClient(id);
         } catch (error) {
             this.logger.error(error.message);
             this.logger.error('Client not found');
@@ -64,7 +64,7 @@ export class ClientController {
     @HttpCode(HttpStatus.OK)
     async getAllClients() {
         try {
-            return this.getClientUseCase.getAllClients();
+            return await this.getClientUseCase.getAllClients();
         } catch (error) {
             this.logger.error(error.message);
             throw new InternalServerErrorException({

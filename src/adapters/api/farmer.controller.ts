@@ -14,8 +14,8 @@ import {
 import {
     CreateFarmerUseCase,
     GetFarmerUseCase,
-} from 'src/application/ports/in/Farmer.use-case';
-import { CreateFarmerRequestBodyDTO } from './dto/Farmer.dto';
+} from 'src/application/ports/in/farmer.use-case';
+import { CreateFarmerRequestBodyDTO } from './dto/farmer.dto';
 
 @Controller('farmer')
 export class FarmerController {
@@ -50,7 +50,7 @@ export class FarmerController {
     @HttpCode(HttpStatus.OK)
     async getFarmer(@Param('id') id: number) {
         try {
-            return this.getFarmerUseCase.getFarmer(id);
+            return await this.getFarmerUseCase.getFarmer(id);
         } catch (error) {
             this.logger.error(error.message);
             this.logger.error('Farmer not found');
@@ -64,7 +64,7 @@ export class FarmerController {
     @HttpCode(HttpStatus.OK)
     async getAllFarmers() {
         try {
-            return this.getFarmerUseCase.getAllFarmers();
+            return await this.getFarmerUseCase.getAllFarmers();
         } catch (error) {
             this.logger.error(error.message);
             throw new InternalServerErrorException({

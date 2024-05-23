@@ -57,7 +57,7 @@ export class FruitVarietyController {
     @HttpCode(HttpStatus.OK)
     async getFruit() {
         try {
-            return this.getFruitUseCase.getAllFruits();
+            return await this.getFruitUseCase.getAllFruits();
         } catch (error) {
             this.logger.error(error.message);
             throw new InternalServerErrorException({
@@ -70,7 +70,7 @@ export class FruitVarietyController {
     @HttpCode(HttpStatus.OK)
     async getFruitById(@Param('id') id: number) {
         try {
-            return this.getFruitUseCase.getFruit(id);
+            return await this.getFruitUseCase.getFruit(id);
         } catch (error) {
             this.logger.error(error.message);
             throw new InternalServerErrorException({
@@ -101,7 +101,7 @@ export class FruitVarietyController {
     @HttpCode(HttpStatus.OK)
     async getVariety() {
         try {
-            return this.getVarietyUseCase.getAllVarieties();
+            return await this.getVarietyUseCase.getAllVarieties();
         } catch (error) {
             this.logger.error(error.message);
             throw new InternalServerErrorException({

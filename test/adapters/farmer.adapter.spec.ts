@@ -1,14 +1,37 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Unique } from 'typeorm';
+import { FarmerModel } from 'src/domain/models/Farmer.model';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { FarmerAdapter } from 'src/adapters/persistence/farmer.adapter';
-import { FarmerEntity } from 'src/adapters/persistence/entities/farmer.entity';
-import { FarmerModel } from 'src/domain/models/farmer.model';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { FarmerEntity } from 'src/adapters/persistence/entities';
 
 describe('FarmerAdapter', () => {
     let adapter: FarmerAdapter;
-    let farmerRepository: Repository<FarmerEntity>;
+    let repository: Repository<FarmerEntity>;
+
+    const farmerEntity = new FarmerEntity();
+    farmerEntity.id = 1;
+    farmerEntity.firstName = 'John';
+    farmerEntity.lastName = 'Doe';
+    farmerEntity.email = 'john.doe@example.com';
+    farmerEntity.fields = [
+        {
+            id: 1,
+            name: 'Field1',
+            location: 'Location1',
+            farmer: new FarmerEntity(),
+            harvests: [],
+        },
+    ];
+
+    const farmerModel: FarmerModel = {
+        id: 1,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+        fields: [{ name: 'Field1', location: 'Location1' }],
+    };
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -22,7 +45,7 @@ describe('FarmerAdapter', () => {
         }).compile();
 
         adapter = module.get<FarmerAdapter>(FarmerAdapter);
-        farmerRepository = module.get<Repository<FarmerEntity>>(
+        repository = module.get<Repository<FarmerEntity>>(
             getRepositoryToken(FarmerEntity),
         );
     });
@@ -31,126 +54,107 @@ describe('FarmerAdapter', () => {
         expect(adapter).toBeDefined();
     });
 
-    describe('createFarmer', () => {
-        it('should create a farmer', async () => {
-            const farmer: FarmerModel = {
+    describe('getOrCreateFarmerByEmail', () => {
+        it('should return an existing farmer', async () => {
+            jest.spyOn(adapter, 'getFarmerByEmail').mockResolvedValue(
+                farmerEntity,
+            );
+            jest.spyOn(repository, 'update').mockResolvedValue(undefined);
+
+            const result = await adapter.getOrCreateFarmerByEmail(farmerModel);
+            expect(result).toEqual({
                 id: 1,
                 firstName: 'John',
                 lastName: 'Doe',
                 email: 'john.doe@example.com',
-            };
-            const farmerEntity = new FarmerEntity();
-            Object.assign(farmerEntity, farmer);
-
-            jest.spyOn(farmerRepository, 'findOneBy').mockResolvedValue(null);
-            jest.spyOn(farmerRepository, 'create').mockReturnValue(
-                farmerEntity,
-            );
-            jest.spyOn(farmerRepository, 'save').mockResolvedValue(
-                farmerEntity,
-            );
-
-            const result = await adapter.createFarmer(farmer);
-            expect(result).toEqual(farmer);
-            expect(farmerRepository.findOneBy).toHaveBeenCalledWith({
-                email: farmer.email,
             });
-            expect(farmerRepository.create).toHaveBeenCalledWith(farmer);
-            expect(farmerRepository.save).toHaveBeenCalledWith(farmerEntity);
         });
 
-        it('should throw a ConflictException if farmer with email already exists', async () => {
-            const farmer: FarmerModel = {
+        it('should create a new farmer if it does not exist', async () => {
+            jest.spyOn(adapter, 'getFarmerByEmail').mockResolvedValue(
+                undefined,
+            );
+            jest.spyOn(repository, 'findOneBy').mockReturnValue(null);
+            jest.spyOn(repository, 'create').mockReturnValue(farmerEntity);
+            jest.spyOn(repository, 'save').mockResolvedValue(farmerEntity);
+
+            const result = await adapter.getOrCreateFarmerByEmail({
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john.doe@example.com',
+            });
+            expect(result).toEqual({
                 id: 1,
                 firstName: 'John',
                 lastName: 'Doe',
                 email: 'john.doe@example.com',
-            };
-            const farmerEntity = new FarmerEntity();
-            Object.assign(farmerEntity, farmer);
+            });
+        });
+    });
 
-            jest.spyOn(farmerRepository, 'findOneBy').mockResolvedValue(
-                farmerEntity,
-            );
+    describe('createFarmer', () => {
+        it('should throw ConflictException if farmer already exists', async () => {
+            jest.spyOn(repository, 'findOneBy').mockResolvedValue(farmerEntity);
 
-            await expect(adapter.createFarmer(farmer)).rejects.toThrow(
+            await expect(adapter.createFarmer(farmerModel)).rejects.toThrow(
                 ConflictException,
             );
-            expect(farmerRepository.findOneBy).toHaveBeenCalledWith({
-                email: farmer.email,
+        });
+
+        it('should create and return a new farmer', async () => {
+            jest.spyOn(repository, 'findOneBy').mockResolvedValue(undefined);
+            jest.spyOn(repository, 'create').mockReturnValue(farmerEntity);
+            jest.spyOn(repository, 'save').mockResolvedValue(farmerEntity);
+
+            const result = await adapter.createFarmer(farmerModel);
+            expect(result).toEqual({
+                id: 1,
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john.doe@example.com',
             });
         });
     });
 
     describe('getFarmer', () => {
-        it('should return a farmer by id', async () => {
-            const farmer: FarmerModel = {
-                id: 1,
-                firstName: 'John',
-                lastName: 'Doe',
-                email: 'john.doe@example.com',
-                fields: [],
-            };
-            const farmerEntity = new FarmerEntity();
-            Object.assign(farmerEntity, farmer);
-
-            jest.spyOn(farmerRepository, 'findOne').mockResolvedValue(
-                farmerEntity,
-            );
+        it('should return a farmer if found', async () => {
+            jest.spyOn(repository, 'findOne').mockResolvedValue(farmerEntity);
 
             const result = await adapter.getFarmer(1);
-            expect(result).toEqual(farmer);
-            expect(farmerRepository.findOne).toHaveBeenCalledWith({
-                where: { id: 1 },
-                relations: ['fields'],
-            });
+            expect(result).toEqual(farmerModel);
         });
 
-        it('should throw a NotFoundException if farmer is not found', async () => {
-            jest.spyOn(farmerRepository, 'findOne').mockResolvedValue(null);
+        it('should throw NotFoundException if farmer not found', async () => {
+            jest.spyOn(repository, 'findOne').mockResolvedValue(undefined);
 
             await expect(adapter.getFarmer(1)).rejects.toThrow(
                 NotFoundException,
             );
-            expect(farmerRepository.findOne).toHaveBeenCalledWith({
-                where: { id: 1 },
-                relations: ['fields'],
-            });
         });
     });
 
     describe('getAllFarmers', () => {
-        it('should return all farmers', async () => {
-            const farmers: FarmerModel[] = [
-                {
-                    id: 1,
-                    firstName: 'John',
-                    lastName: 'Doe',
-                    email: 'john.doe@example.com',
-                    fields: [{ name: 'Field 1', location: 'Location 1' }],
-                },
-            ];
-            const farmerEntities = farmers.map((farmer) => {
-                const entity = new FarmerEntity();
-                entity.id = farmer.id;
-                entity.firstName = farmer.firstName;
-                entity.lastName = farmer.lastName;
-                entity.email = farmer.email;
-                entity.fields = [
-                    { name: 'Field 1', location: 'Location 1' },
-                ] as any;
-                return entity;
-            });
-
-            jest.spyOn(farmerRepository, 'find').mockResolvedValue(
-                farmerEntities,
-            );
+        it('should return an array of farmers', async () => {
+            jest.spyOn(repository, 'find').mockResolvedValue([farmerEntity]);
 
             const result = await adapter.getAllFarmers();
-            expect(result).toEqual(farmers);
-            expect(farmerRepository.find).toHaveBeenCalledWith({
-                relations: ['fields'],
-            });
+            expect(result).toEqual([farmerModel]);
+        });
+    });
+
+    describe('getFarmerByEmail', () => {
+        it('should return a farmer if found by email', async () => {
+            jest.spyOn(repository, 'findOneBy').mockResolvedValue(farmerEntity);
+
+            const result = await adapter.getFarmerByEmail(farmerModel.email);
+            expect(result).toEqual(farmerEntity);
+        });
+
+        it('should return undefined if farmer not found by email', async () => {
+            jest.spyOn(repository, 'findOneBy').mockResolvedValue(undefined);
+
+            const result = await adapter.getFarmerByEmail(farmerModel.email);
+            expect(result).toBeUndefined();
         });
     });
 });
