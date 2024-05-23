@@ -136,3 +136,5 @@ La aplicación se ejecutará en `http://localhost:3000`
 - Implementar pruebas de aceptación (e2e)
 
 ## 9. Changelog
+
+Equipo Onestga, pueden encontrar historial de cambios en [CHANGELOG](CHANGELOG.md).
