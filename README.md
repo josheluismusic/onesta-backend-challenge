@@ -137,4 +137,4 @@ La aplicación se ejecutará en `http://localhost:3000`
 
 ## 9. Changelog
 
-Equipo Onestga, pueden encontrar historial de cambios en [CHANGELOG](CHANGELOG.md).
+Equipo Onesta, pueden encontrar historial de cambios en [CHANGELOG](CHANGELOG.md).
